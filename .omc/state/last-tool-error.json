@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/ksh/onuljang/onuljang-bot\"}",
+  "error": "EISDIR: illegal operation on a directory, read '/Users/ksh/onuljang/onuljang-bot'",
+  "timestamp": "2026-04-05T16:01:26.630Z",
+  "retry_count": 1
+}
