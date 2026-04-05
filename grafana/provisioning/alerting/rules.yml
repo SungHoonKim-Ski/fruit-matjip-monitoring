@@ -1,0 +1,321 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: onuljang-infra
+    folder: Onuljang Alerts
+    interval: 1m
+    rules:
+      - uid: heap-high
+        title: JVM Heap 사용률 높음
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} * 100
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [85]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM Heap 사용률 {{ $value | printf \"%.0f\" }}%"
+
+      - uid: hikaricp-pending
+        title: HikariCP 대기 커넥션 과다
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: hikaricp_connections_pending
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HikariCP 대기 커넥션 {{ $value }}개"
+
+      - uid: http-5xx-rate
+        title: HTTP 5xx 에러율 높음
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: >
+                sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+                / sum(rate(http_server_requests_seconds_count[5m])) * 100
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx 에러율 {{ $value | printf \"%.1f\" }}%"
+
+      - uid: cpu-high
+        title: CPU 사용률 높음
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: system_cpu_usage * 100
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [90]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU 사용률 {{ $value | printf \"%.0f\" }}%"
+
+  - orgId: 1
+    name: onuljang-business
+    folder: Onuljang Alerts
+    interval: 5m
+    rules:
+      - uid: stale-delivery
+        title: 배달 미완료 주문 (PAID >90분)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: onuljang_stale_deliveries
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PAID 상태 90분 초과 배달 주문 {{ $value }}건"
+
+      - uid: negative-stock
+        title: 재고 음수 감지
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: onuljang_negative_stock_products
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "재고 음수 상품 {{ $value }}개"
+
+      - uid: payment-failure-rate
+        title: 결제 실패율 높음
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: >
+                sum(rate(onuljang_payments_total{result="fail"}[10m]))
+                / sum(rate(onuljang_payments_total[10m])) * 100
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "결제 실패율 {{ $value | printf \"%.1f\" }}%"
+
+  - orgId: 1
+    name: onuljang-slow-query
+    folder: Onuljang Alerts
+    interval: 1m
+    rules:
+      - uid: slow-query-warn
+        title: Slow Query 감지 (p95 > 200ms)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(jdbc_query_seconds_bucket[5m])) by (le))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.2]
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JDBC p95 쿼리 시간 {{ $value | printf \"%.0f\" }}ms"
+
+      - uid: slow-query-critical
+        title: Very Slow Query 감지 (p95 > 1s)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(jdbc_query_seconds_bucket[5m])) by (le))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JDBC p95 쿼리 시간 {{ $value | printf \"%.0f\" }}ms — 1초 초과"
+
+      - uid: scheduler-failure
+        title: 스케줄러 실행 실패
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(increase(onuljang_scheduler_duration_seconds_count{result="failure"}[10m]))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "스케줄러 실패 {{ $value }}건 (최근 10분)"

@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# NOTE: management port 9090은 EC2 보안그룹에서 외부 차단 필수.
+# host.docker.internal은 Docker의 extra_hosts: host-gateway를 통해 호스트에 접근.
+
+scrape_configs:
+  - job_name: 'onuljang-be'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:9090']
+    scrape_interval: 15s
