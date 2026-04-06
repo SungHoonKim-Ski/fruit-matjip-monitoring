@@ -134,37 +134,6 @@ groups:
     folder: Onuljang Alerts
     interval: 5m
     rules:
-      - uid: stale-delivery
-        title: 배달 미완료 주문 (PAID >90분)
-        noDataState: OK
-        condition: C
-        data:
-          - refId: A
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: prometheus
-            model:
-              expr: onuljang_stale_deliveries
-              instant: true
-          - refId: C
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: A
-              conditions:
-                - evaluator:
-                    type: gt
-                    params: [0]
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "PAID 상태 90분 초과 배달 주문 {{ $value }}건"
-
       - uid: negative-stock
         title: 재고 음수 감지
         noDataState: OK
@@ -197,7 +166,7 @@ groups:
           summary: "재고 음수 상품 {{ $value }}개"
 
       - uid: payment-failure-rate
-        title: 결제 실패율 높음
+        title: PG 결제 실패 (시스템 오류)
         noDataState: OK
         condition: C
         data:
@@ -208,8 +177,7 @@ groups:
             datasourceUid: prometheus
             model:
               expr: >
-                sum(rate(onuljang_payments_total{result="fail"}[10m]))
-                / sum(rate(onuljang_payments_total[10m])) * 100
+                sum(increase(onuljang_payments_total{result="fail", reason="system"}[10m]))
               instant: true
           - refId: C
             relativeTimeRange:
@@ -222,12 +190,12 @@ groups:
               conditions:
                 - evaluator:
                     type: gt
-                    params: [5]
-        for: 5m
+                    params: [0]
+        for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "결제 실패율 {{ $value | printf \"%.1f\" }}%"
+          summary: "PG 시스템 결제 실패 {{ $value }}건 (최근 10분)"
 
   - orgId: 1
     name: onuljang-slow-query
