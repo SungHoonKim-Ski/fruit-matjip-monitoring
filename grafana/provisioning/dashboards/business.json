@@ -113,8 +113,8 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum(rate(onuljang_scheduler_duration_seconds_bucket[5m])) by (le, scheduler_name))",
-          "legendFormat": "p95 - {{scheduler_name}}",
+          "expr": "histogram_quantile(0.95, sum(rate(onuljang_scheduler_duration_seconds_bucket[5m])) by (le, scheduler))",
+          "legendFormat": "p95 - {{scheduler}}",
           "refId": "A"
         }
       ],
@@ -160,8 +160,8 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(onuljang_scheduler_duration_seconds_count{result=\"failure\"}[5m])) by (scheduler_name)",
-          "legendFormat": "{{scheduler_name}}",
+          "expr": "sum(rate(onuljang_scheduler_duration_seconds_count{result=\"failure\"}[5m])) by (scheduler)",
+          "legendFormat": "{{scheduler}}",
           "refId": "A"
         }
       ],

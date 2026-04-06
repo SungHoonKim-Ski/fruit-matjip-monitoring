@@ -120,7 +120,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(http_server_requests_seconds_count{job=\"onuljang\"}[5m]))",
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{job=\"onuljang-be\"}[5m]))",
           "legendFormat": "{{status}}",
           "range": true,
           "refId": "A"
@@ -184,7 +184,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "100 * sum(rate(http_server_requests_seconds_count{job=\"onuljang\", status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=\"onuljang\"}[5m]))",
+          "expr": "100 * sum(rate(http_server_requests_seconds_count{job=\"onuljang-be\", status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count{job=\"onuljang-be\"}[5m]))",
           "legendFormat": "5xx error rate %",
           "range": true,
           "refId": "A"
@@ -253,7 +253,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang-be\"}[5m])))",
           "legendFormat": "p50",
           "range": true,
           "refId": "A"
@@ -261,7 +261,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang-be\"}[5m])))",
           "legendFormat": "p95",
           "range": true,
           "refId": "B"
@@ -269,7 +269,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"onuljang-be\"}[5m])))",
           "legendFormat": "p99",
           "range": true,
           "refId": "C"
@@ -332,7 +332,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "topk(5, histogram_quantile(0.99, sum by (uri, le) (rate(http_server_requests_seconds_bucket{job=\"onuljang\"}[5m]))))",
+          "expr": "topk(5, histogram_quantile(0.99, sum by (uri, le) (rate(http_server_requests_seconds_bucket{job=\"onuljang-be\"}[5m]))))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -537,7 +537,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "hikaricp_connections_active{job=\"onuljang\"}",
+          "expr": "hikaricp_connections_active{job=\"onuljang-be\"}",
           "legendFormat": "{{pool}}",
           "instant": false,
           "range": true,
@@ -582,7 +582,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "process_uptime_seconds{job=\"onuljang\"}",
+          "expr": "process_uptime_seconds{job=\"onuljang-be\"}",
           "legendFormat": "Uptime",
           "instant": false,
           "range": true,
