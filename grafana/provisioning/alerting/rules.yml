@@ -68,6 +68,7 @@ groups:
 
       - uid: http-5xx-rate
         title: HTTP 5xx 에러율 높음
+        noDataState: OK
         condition: C
         data:
           - refId: A
@@ -135,6 +136,7 @@ groups:
     rules:
       - uid: stale-delivery
         title: 배달 미완료 주문 (PAID >90분)
+        noDataState: OK
         condition: C
         data:
           - refId: A
@@ -165,6 +167,7 @@ groups:
 
       - uid: negative-stock
         title: 재고 음수 감지
+        noDataState: OK
         condition: C
         data:
           - refId: A
@@ -195,6 +198,7 @@ groups:
 
       - uid: payment-failure-rate
         title: 결제 실패율 높음
+        noDataState: OK
         condition: C
         data:
           - refId: A
@@ -292,6 +296,7 @@ groups:
 
       - uid: scheduler-failure
         title: 스케줄러 실행 실패
+        noDataState: OK
         condition: C
         data:
           - refId: A
