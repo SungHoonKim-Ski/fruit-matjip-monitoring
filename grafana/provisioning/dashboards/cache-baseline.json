@@ -687,7 +687,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "rate(onuljang_request_db_time_seconds_sum{uri=~\"/api/courier/(auth/)?products.*\"}[15m]) / rate(http_server_requests_seconds_sum{job=\"onuljang-be\", uri=~\"/api/courier/(auth/)?products.*\"}[15m]) * 100",
+          "expr": "increase(onuljang_request_db_time_seconds_sum{uri=~\"/api/courier/(auth/)?products.*\"}[15m]) / increase(http_server_requests_seconds_sum{uri=~\"/api/courier/(auth/)?products.*\"}[15m]) * 100",
           "legendFormat": "{{uri}}",
           "range": true,
           "refId": "A"
@@ -745,7 +745,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "rate(onuljang_request_db_time_seconds_sum{uri=~\"/api/store/auth/products.*\"}[15m]) / rate(http_server_requests_seconds_sum{job=\"onuljang-be\", uri=~\"/api/store/auth/products.*\"}[15m]) * 100",
+          "expr": "increase(onuljang_request_db_time_seconds_sum{uri=~\"/api/store/auth/products.*\"}[15m]) / increase(http_server_requests_seconds_sum{uri=~\"/api/store/auth/products.*\"}[15m]) * 100",
           "legendFormat": "{{uri}}",
           "range": true,
           "refId": "A"
