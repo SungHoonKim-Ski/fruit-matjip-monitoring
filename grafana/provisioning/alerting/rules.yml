@@ -1,9 +1,5 @@
 apiVersion: 1
 
-deleteRules:
-  - orgId: 1
-    uid: stale-delivery
-
 groups:
   - orgId: 1
     name: onuljang-infra
@@ -200,6 +196,142 @@ groups:
           severity: critical
         annotations:
           summary: "PG 시스템 결제 실패 {{ $value }}건 (최근 10분)"
+
+  - orgId: 1
+    name: onuljang-delivery
+    folder: Onuljang Alerts
+    interval: 5m
+    rules:
+      - uid: tracking-failure-rate
+        title: 배송 트래킹 요청 실패율 높음
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: >
+                sum(increase(onuljang_tracking_requests_total{result="fail"}[10m]))
+                / (sum(increase(onuljang_tracking_requests_total[10m])) > 0) * 100
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [30]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "배송 트래킹 실패율 {{ $value | printf \"%.0f\" }}% (최근 10분)"
+
+      - uid: active-orders-high
+        title: 처리 중 택배 주문 과다
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: onuljang_active_courier_orders
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [200]
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "처리 중 택배 주문 {{ $value }}건 — 적체 가능성"
+
+  - orgId: 1
+    name: onuljang-payment
+    folder: Onuljang Alerts
+    interval: 5m
+    rules:
+      - uid: pg-approval-slow
+        title: PG 결제 승인 지연 (p95 > 5s)
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(onuljang_payment_approval_seconds_bucket[10m])) by (le))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PG 결제 승인 p95 {{ $value | printf \"%.1f\" }}초"
+
+      - uid: notification-failure-spike
+        title: 알림톡 발송 실패 급증
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(increase(onuljang_notifications_total{result="fail"}[10m]))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "알림톡 발송 실패 {{ $value }}건 (최근 10분)"
 
   - orgId: 1
     name: onuljang-slow-query
