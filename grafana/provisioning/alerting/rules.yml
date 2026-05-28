@@ -409,7 +409,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: sum(increase(onuljang_scheduler_duration_seconds_count{result="failure"}[10m]))
+              expr: sum by (scheduler, method) (increase(onuljang_scheduler_duration_seconds_count{result="failure"}[10m]))
               instant: true
           - refId: C
             relativeTimeRange:
@@ -427,4 +427,12 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "스케줄러 실패 {{ $value }}건 (최근 10분)"
+          summary: "{{ $labels.scheduler }}.{{ $labels.method }} 실패 {{ $value }}건 (최근 10분)"
+          description: |
+            스케줄러: {{ $labels.scheduler }}
+            메서드: {{ $labels.method }}
+            실패 횟수: {{ $value }}건 (최근 10분)
+
+            ⚠️ RESOLVED는 10분 윈도우가 지났다는 의미일 뿐 결함이 해소된 것이 아니다.
+            매일 1회 실행되는 cron이면 다음 실행은 24시간 후이므로 RESOLVED 후에도 데이터 결함은 남아 있을 수 있다.
+            데이터 정합성을 직접 검증한 후에만 안전하다고 판단할 것.
