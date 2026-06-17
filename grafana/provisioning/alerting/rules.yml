@@ -336,6 +336,8 @@ groups:
     folder: Onuljang Alerts
     interval: 1m
     rules:
+      # main에서 선반영된 안전망 — jdbc_query_seconds 기반 500ms 초과 카운트.
+      # BE PR(app_slow_query metric)이 prod에 배포·안정화되기 전까지 유지하다 후속 PR에서 제거 검토.
       - uid: slow-query-count
         title: Slow Query 발생 (500ms 초과)
         noDataState: OK
@@ -368,6 +370,72 @@ groups:
           severity: critical
         annotations:
           summary: "500ms 초과 JDBC 쿼리 {{ $value | printf \"%.0f\" }}건 (최근 5분)"
+
+      # app_slow_query metric: BE에서 100ms 초과 JDBC 쿼리에만 query_id + improvable 라벨로 기록.
+      # improvable="true" 만 알람 대상 — known-slow-queries.yml 등재 query_id 는 자동 제외.
+      # BE 신규 부팅 후 ~5분 metric 적재 대기 후 발화 안정.
+
+      - uid: slow-query-new-burst
+        title: 새 slow query burst 감지 (improvable, 분당 3건+)
+        condition: C
+        noDataState: OK
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum by (query_id) (rate(app_slow_query_seconds_count{improvable="true"}[5m]))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.05]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "신규 slow query id={{ $labels.query_id }} — 분당 {{ $value | printf \"%.1f\" }}건 (개선 후보 또는 known-slow 등재)"
+
+      - uid: slow-query-critical
+        title: Slow query p95 > 1s 지속 (improvable)
+        condition: C
+        noDataState: OK
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum by (le) (rate(app_slow_query_seconds_bucket{improvable="true"}[10m])))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "improvable slow query p95 {{ $value | printf \"%.0f\" }}ms — 10분 이상 지속, 시스템 전반 부하"
 
       - uid: scheduler-failure
         title: 스케줄러 실행 실패
