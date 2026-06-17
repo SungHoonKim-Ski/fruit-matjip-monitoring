@@ -66,8 +66,8 @@ groups:
         annotations:
           summary: "HikariCP 대기 커넥션 {{ $value }}개"
 
-      - uid: http-5xx-rate
-        title: HTTP 5xx 에러율 높음
+      - uid: http-5xx-count
+        title: HTTP 5xx 응답 발생
         noDataState: OK
         condition: C
         data:
@@ -77,9 +77,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: >
-                sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
-                / sum(rate(http_server_requests_seconds_count[5m])) * 100
+              expr: sum(increase(http_server_requests_seconds_count{status=~"5.."}[5m]))
               instant: true
           - refId: C
             relativeTimeRange:
@@ -92,12 +90,12 @@ groups:
               conditions:
                 - evaluator:
                     type: gt
-                    params: [1]
-        for: 3m
+                    params: [0]
+        for: 0s
         labels:
           severity: critical
         annotations:
-          summary: "HTTP 5xx 에러율 {{ $value | printf \"%.1f\" }}%"
+          summary: "HTTP 5xx 응답 {{ $value | printf \"%.0f\" }}건 (최근 5분)"
 
       - uid: cpu-high
         title: CPU 사용률 높음
@@ -338,6 +336,41 @@ groups:
     folder: Onuljang Alerts
     interval: 1m
     rules:
+      # main에서 선반영된 안전망 — jdbc_query_seconds 기반 500ms 초과 카운트.
+      # BE PR(app_slow_query metric)이 prod에 배포·안정화되기 전까지 유지하다 후속 PR에서 제거 검토.
+      - uid: slow-query-count
+        title: Slow Query 발생 (500ms 초과)
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: >
+                sum(increase(jdbc_query_seconds_count[5m]))
+                - sum(increase(jdbc_query_seconds_bucket{le="0.536870911"}[5m]))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "500ms 초과 JDBC 쿼리 {{ $value | printf \"%.0f\" }}건 (최근 5분)"
+
       # app_slow_query metric: BE에서 100ms 초과 JDBC 쿼리에만 query_id + improvable 라벨로 기록.
       # improvable="true" 만 알람 대상 — known-slow-queries.yml 등재 query_id 는 자동 제외.
       # BE 신규 부팅 후 ~5분 metric 적재 대기 후 발화 안정.
