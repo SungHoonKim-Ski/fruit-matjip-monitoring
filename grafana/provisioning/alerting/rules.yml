@@ -338,15 +338,15 @@ groups:
         data:
           - refId: A
             relativeTimeRange:
-              from: 600
+              from: 7200
               to: 0
             datasourceUid: prometheus
             model:
-              expr: sum by (direction) (increase(onuljang_payment_reconcile_mismatch_total[10m]))
+              expr: sum by (direction) (increase(onuljang_payment_reconcile_mismatch_total[2h]))
               instant: true
           - refId: C
             relativeTimeRange:
-              from: 600
+              from: 7200
               to: 0
             datasourceUid: __expr__
             model:
@@ -360,17 +360,17 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "결제 정합 불일치 {{ $value }}건 (direction={{ $labels.direction }}, 최근 10분)"
+          summary: "결제 정합 불일치 {{ $value }}건 (direction={{ $labels.direction }}, 최근 2시간)"
           description: |
             방향: {{ $labels.direction }}
-            불일치 건수: {{ $value }}건 (최근 10분)
+            불일치 건수: {{ $value }}건 (최근 2시간)
 
             direction=A → 고객 미수령 위험 (환불이 고객에게 도달하지 않았을 가능성)
             direction=B → 이중지급 위험 (환불이 중복 처리됐을 가능성)
 
             ⚠️ 탐지 전용 알림이다. 자동 환불·자동 조치는 수행되지 않는다.
             운영자가 직접 결제 정합을 확인하고 처리할 것.
-            RESOLVED는 10분 윈도우가 지났다는 의미일 뿐 불일치가 해소된 것이 아니다.
+            RESOLVED는 2시간 윈도우가 지났다는 의미일 뿐 불일치가 해소된 것이 아니다.
 
   - orgId: 1
     name: onuljang-slow-query
