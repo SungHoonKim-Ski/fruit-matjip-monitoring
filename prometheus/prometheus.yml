@@ -11,3 +11,12 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:9090']
     scrape_interval: 15s
+
+  # Redis (ops 박스 standalone) — redis_exporter.
+  # ops 박스 사설 IP 직접 지정. 컨테이너 egress가 app box IP(172.26.14.62)로 NAT되어
+  # ops 방화벽 9121←172.26.14.62/32 규칙을 통과한다 (host.docker.internal은 app box 자신이라 부적합).
+  - job_name: 'redis'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['172.26.14.83:9121']
+    scrape_interval: 15s
