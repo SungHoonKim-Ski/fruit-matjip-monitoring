@@ -378,8 +378,10 @@ groups:
     interval: 1m
     rules:
       # 500ms 초과 1건 즉시 감지 — 규칙은 유지한다(운영자 결정 2026-09-15, 감지 자체를 끄는 안은 반려).
-      # app_slow_query metric 기반: improvable="true"만 세므로 known-slow-queries.yml 등재 query_id는 제외된다.
-      # bucket 경계 0.5는 BE SlowQueryObservationHandler.SLO_BOUNDARIES와 짝 — 한쪽을 바꾸면 다른 쪽도 바꾼다.
+      # improvable="true"만 세므로 known-slow-queries.yml 등재 query_id는 제외된다.
+      # query_id별 Timer(app_slow_query_seconds)가 아니라 전용 Counter를 읽는다 — Timer 시리즈는 첫 관측 때 값 1로 태어나
+      # increase()가 그 첫 건을 못 센다(prod 실측 c191f4a5, 2026-09-16). 이 Counter는 BE 기동 시 0으로 등록된다.
+      # 이름·경계는 BE SlowQueryObservationHandler.OVER_THRESHOLD_METRIC과 짝 — 한쪽을 바꾸면 다른 쪽도 바꾼다.
       - uid: slow-query-count
         title: Slow Query 발생 (improvable, 500ms 초과)
         noDataState: OK
@@ -391,9 +393,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: >
-                sum(increase(app_slow_query_seconds_count{improvable="true"}[5m]))
-                - sum(increase(app_slow_query_seconds_bucket{improvable="true", le="0.5"}[5m]))
+              expr: sum(increase(app_slow_query_over500ms_total{improvable="true"}[5m]))
               instant: true
           - refId: C
             relativeTimeRange:
