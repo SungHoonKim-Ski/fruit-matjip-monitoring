@@ -598,7 +598,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(onuljang_payments_total[6h])) by (provider, result)",
+          "expr": "label_replace(sum(increase(onuljang_payment_success_total[6h])) by (provider), \"result\", \"success\", \"\", \"\") or label_replace(sum(increase(onuljang_payment_failure_total[6h])) by (provider), \"result\", \"fail\", \"\", \"\")",
           "format": "table",
           "instant": true,
           "legendFormat": "{{provider}} - {{result}}",
@@ -842,8 +842,8 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "onuljang_active_courier_orders",
-          "legendFormat": "Active Orders",
+          "expr": "sum(onuljang_courier_tracking_gauge)",
+          "legendFormat": "Tracking Orders",
           "refId": "A"
         }
       ],

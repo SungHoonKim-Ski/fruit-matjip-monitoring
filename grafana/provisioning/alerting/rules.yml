@@ -175,7 +175,7 @@ groups:
             datasourceUid: prometheus
             model:
               expr: >
-                sum(increase(onuljang_payments_total{result="fail", reason="system"}[10m]))
+                sum(increase(onuljang_payment_failure_total{reason="system"}[10m]))
               instant: true
           - refId: C
             relativeTimeRange:
@@ -244,7 +244,7 @@ groups:
               to: 0
             datasourceUid: prometheus
             model:
-              expr: onuljang_active_courier_orders
+              expr: sum(onuljang_courier_tracking_gauge)
               instant: true
           - refId: C
             relativeTimeRange:
