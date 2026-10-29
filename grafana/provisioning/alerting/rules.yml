@@ -372,6 +372,77 @@ groups:
             운영자가 직접 결제 정합을 확인하고 처리할 것.
             RESOLVED는 2시간 윈도우가 지났다는 의미일 뿐 불일치가 해소된 것이 아니다.
 
+      - uid: refund-pg-unrecorded
+        title: 결제사 환불만 되고 기록되지 않은 관리자 환불
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: max(onuljang_refund_pg_unrecorded)
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "결제사 환불만 되고 기록되지 않은 환불 {{ $value }}건"
+          description: |
+            카드 환불은 나갔는데 환불 기록이 롤백된 주문서가 있다. 그 주문서는 새 환불이 막혀 있다.
+            어드민 주문서 상세의 경고에서 '기록 다시 시도' 또는 결제사 콘솔 확인 후 '수동 정리 완료'로 푼다.
+            DB: SELECT * FROM refund_pg_traces WHERE status = 'PG_DONE';
+            지표는 5분마다 갱신된다 — 정리 뒤 RESOLVED까지 최대 5분 걸린다.
+
+      - uid: refund-pg-cancel-failure
+        title: 관리자 환불 결제사 취소 실패·기록 실패
+        noDataState: OK
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum by (path, result) (increase(onuljang_refund_pg_cancel_total{result=~"fail|unrecorded"}[10m]))
+              instant: true
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: "관리자 환불 결제사 {{ $labels.result }} {{ $value }}건 ({{ $labels.path }}, 최근 10분)"
+          description: |
+            result=fail: 결제사 취소 호출이 실패했다. 환불은 나가지 않았고 DB도 그대로다(운영자가 다시 시도하면 된다).
+            result=unrecorded: 결제사 취소는 됐는데 그 뒤 단계가 실패해 기록이 롤백됐다. '결제사 환불만 되고 기록되지 않은 관리자 환불' 알림과 같은 건이다.
+            경로(path): ITEMS=환불 창, SINGLE=옛 단건, BULK=옛 일괄.
+
   - orgId: 1
     name: onuljang-slow-query
     folder: Onuljang Alerts
@@ -517,3 +588,4 @@ groups:
             ⚠️ RESOLVED는 10분 윈도우가 지났다는 의미일 뿐 결함이 해소된 것이 아니다.
             매일 1회 실행되는 cron이면 다음 실행은 24시간 후이므로 RESOLVED 후에도 데이터 결함은 남아 있을 수 있다.
             데이터 정합성을 직접 검증한 후에만 안전하다고 판단할 것.
+
