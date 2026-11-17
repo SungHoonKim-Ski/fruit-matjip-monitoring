@@ -240,7 +240,8 @@ groups:
           summary: "배송 트래킹 실패율 {{ $value | printf \"%.0f\" }}% (최근 10분)"
 
       # 발주완료·배송중 총량은 하루 주문량만 따라 오르내려 적체를 가리지 못한다.
-      # 마지막 운송장 발송 뒤 5일(BE BusinessGaugeMetrics.COURIER_STUCK_DAYS) 넘게 머문 주문이 한 건이라도 있으면 울린다.
+      # 나가 있는 운송장이 마지막 이동(배송 조회 이벤트, 없으면 발급·발송일) 뒤 5일(BE BusinessGaugeMetrics.COURIER_STUCK_DAYS) 넘게
+      # 움직이지 않은 주문이 한 건이라도 있으면 울린다.
       # max: 블루그린 전환 중 두 JVM이 같은 DB 건수를 함께 내보내도 두 배로 세지 않는다.
       - uid: courier-orders-stuck
         title: 택배 주문 장기 정체
@@ -271,7 +272,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "발주완료·배송중으로 5일 넘게 머문 택배 주문 {{ $value }}건 — 어드민 택배 주문에서 확인"
+          summary: "운송장이 5일 넘게 움직이지 않은 택배 주문 {{ $value }}건 — 어드민 택배 주문에서 확인"
 
   - orgId: 1
     name: onuljang-payment
