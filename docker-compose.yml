@@ -1,7 +1,10 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    # 버전 고정: ops 박스로 옮기며 prod의 TSDB 볼륨을 그대로 가져왔다. latest를 새로 받으면 데이터 형식이 바뀔 수 있다.
+    image: prom/prometheus:v3.11.0
     container_name: onuljang-prometheus
+    # ops 박스는 스왑이 없고 Redis와 메모리를 나눠 쓴다. 상한을 넘기면 Redis가 아니라 이 컨테이너가 죽게 한다.
+    mem_limit: 512m
     ports:
       - "127.0.0.1:9091:9090"
     volumes:
@@ -12,13 +15,13 @@ services:
       - '--storage.tsdb.retention.time=90d'
       - '--storage.tsdb.retention.size=5GB'
       - '--web.enable-lifecycle'
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    # 버전 고정: grafana.db를 prod에서 옮겨 왔다. 새 버전은 기동 때 DB를 바꿔 되돌리기가 어렵다.
+    image: grafana/grafana:12.4.2
     container_name: onuljang-grafana
+    mem_limit: 256m
     ports:
       - "127.0.0.1:3001:3000"
     volumes:
