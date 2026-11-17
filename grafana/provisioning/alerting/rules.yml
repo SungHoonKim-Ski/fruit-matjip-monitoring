@@ -1,5 +1,11 @@
 apiVersion: 1
 
+# 파일에서 규칙을 빼도 Grafana에 등록된 규칙은 남는다 — uid로 지운다.
+# 한 번 반영된 뒤에는 지워도 된다(9876b7a → 0b57665 선례).
+deleteRules:
+  - orgId: 1
+    uid: active-orders-high
+
 groups:
   - orgId: 1
     name: onuljang-infra
@@ -233,22 +239,25 @@ groups:
         annotations:
           summary: "배송 트래킹 실패율 {{ $value | printf \"%.0f\" }}% (최근 10분)"
 
-      - uid: active-orders-high
-        title: 처리 중 택배 주문 과다
+      # 발주완료·배송중 총량은 하루 주문량만 따라 오르내려 적체를 가리지 못한다.
+      # 마지막 운송장 발송 뒤 5일(BE BusinessGaugeMetrics.COURIER_STUCK_DAYS) 넘게 머문 주문이 한 건이라도 있으면 울린다.
+      # max: 블루그린 전환 중 두 JVM이 같은 DB 건수를 함께 내보내도 두 배로 세지 않는다.
+      - uid: courier-orders-stuck
+        title: 택배 주문 장기 정체
         noDataState: OK
         condition: C
         data:
           - refId: A
             relativeTimeRange:
-              from: 300
+              from: 600
               to: 0
             datasourceUid: prometheus
             model:
-              expr: sum(onuljang_courier_tracking_gauge)
+              expr: max(onuljang_courier_stuck_orders)
               instant: true
           - refId: C
             relativeTimeRange:
-              from: 300
+              from: 600
               to: 0
             datasourceUid: __expr__
             model:
@@ -257,12 +266,12 @@ groups:
               conditions:
                 - evaluator:
                     type: gt
-                    params: [200]
-        for: 10m
+                    params: [0]
+        for: 15m
         labels:
           severity: warning
         annotations:
-          summary: "처리 중 택배 주문 {{ $value }}건 — 적체 가능성"
+          summary: "발주완료·배송중으로 5일 넘게 머문 택배 주문 {{ $value }}건 — 어드민 택배 주문에서 확인"
 
   - orgId: 1
     name: onuljang-payment
