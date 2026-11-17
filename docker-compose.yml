@@ -21,7 +21,8 @@ services:
     # 버전 고정: grafana.db를 prod에서 옮겨 왔다. 새 버전은 기동 때 DB를 바꿔 되돌리기가 어렵다.
     image: grafana/grafana:12.4.2
     container_name: onuljang-grafana
-    mem_limit: 256m
+    # 256m으로 띄우자 기동 직후 225MiB까지 올라 상한에 붙었다(2026-11-17 실측). 여유를 둔다.
+    mem_limit: 384m
     ports:
       - "127.0.0.1:3001:3000"
     volumes:
