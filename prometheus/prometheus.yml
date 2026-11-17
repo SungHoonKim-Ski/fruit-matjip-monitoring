@@ -2,19 +2,17 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# NOTE: management port 9090은 EC2 보안그룹에서 외부 차단 필수.
-# host.docker.internal은 Docker의 extra_hosts: host-gateway를 통해 호스트에 접근.
+# 이 스택은 ops 박스(172.26.14.83)에서 돈다. 앱 서버(172.26.14.62) 메모리를 비워 블루그린 배포에 쓰기 위해 옮겼다(2026-11-17).
+# NOTE: 앱 서버 management port 9090은 외부(공인 IP) 차단 필수. ops 박스는 사설망으로 접근한다.
 
 scrape_configs:
   - job_name: 'onuljang-be'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:9090']
+      - targets: ['172.26.14.62:9090']
     scrape_interval: 15s
 
-  # Redis (ops 박스 standalone) — redis_exporter.
-  # ops 박스 사설 IP 직접 지정. 컨테이너 egress가 app box IP(172.26.14.62)로 NAT되어
-  # ops 방화벽 9121←172.26.14.62/32 규칙을 통과한다 (host.docker.internal은 app box 자신이라 부적합).
+  # Redis — 같은 ops 박스의 redis_exporter. exporter가 사설 IP(172.26.14.83)에만 바인딩돼 있어 그 주소로 긁는다.
   - job_name: 'redis'
     metrics_path: '/metrics'
     static_configs:
