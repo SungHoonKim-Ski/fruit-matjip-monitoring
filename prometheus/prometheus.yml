@@ -3,13 +3,18 @@ global:
   evaluation_interval: 15s
 
 # 이 스택은 ops 박스(172.26.14.83)에서 돈다. 앱 서버(172.26.14.62) 메모리를 비워 블루그린 배포에 쓰기 위해 옮겼다(2026-11-17).
-# NOTE: 앱 서버 management port 9090은 외부(공인 IP) 차단 필수. ops 박스는 사설망으로 접근한다.
+# NOTE: 앱 서버 management port 9090·9091은 외부(공인 IP) 차단 필수. ops 박스는 사설망으로 접근한다.
 
 scrape_configs:
   - job_name: 'onuljang-be'
     metrics_path: '/actuator/prometheus'
+    # BE는 블루그린으로 두 자리를 번갈아 쓴다: 파랑 9090 · 초록 9091(관리 포트). 평소엔 한쪽만 떠 있어 다른 쪽 대상은 down이 정상이다.
+    # 배포 중 1~2분은 둘 다 떠서 JVM별 값이 두 벌 나온다. 대상 둘을 더하는 쿼리는 그 동안 두 배가 된다.
     static_configs:
       - targets: ['172.26.14.62:9090']
+        labels: {color: blue}
+      - targets: ['172.26.14.62:9091']
+        labels: {color: green}
     scrape_interval: 15s
 
   # Redis — 같은 ops 박스의 redis_exporter. exporter가 사설 IP(172.26.14.83)에만 바인딩돼 있어 그 주소로 긁는다.
